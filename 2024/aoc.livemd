@@ -92,8 +92,7 @@ defmodule Day_2 do
 
   def get_level_differ(list, head) do
     Enum.reduce(list, {[], head}, fn l, {i, j} ->
-      r = l - j
-      {i ++ [r], l}
+      {i ++ [l - j], l}
     end)
     |> elem(0)
   end
@@ -144,9 +143,7 @@ defmodule Day_2 do
     |> Enum.with_index()
     |> Enum.map(fn {_, index} ->
       List.delete_at(list, index)
-    end)
-    |> Enum.map(fn l ->
-      calculate(l, recheck: false)
+      |> calculate(recheck: false)
     end)
     |> Enum.any?()
   end
@@ -211,8 +208,7 @@ defmodule Day_3 do
 
   def run_part2() do
     Regex.scan(~r/mul\(\d+,\d+\)|do\(\)|don't\(\)/, Day_3.input())
-    |> Enum.map(fn [x] -> x end)
-    |> Enum.reduce({[], "do()"}, fn i, {acc, x} ->
+    |> Enum.reduce({[], "do()"}, fn [i], {acc, x} ->
       cond do
         i == "do()" -> {acc, i}
         i == "don't()" -> {acc, i}
