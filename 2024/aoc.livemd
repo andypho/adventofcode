@@ -17,34 +17,46 @@ defmodule Day_1 do
     File.read!("/home/andy/adventofcode/2024/day1.txt")
   end
 
-  def run() do
-    {l1, l2} =
-      Day_1.input()
-      |> String.split()
-      |> Enum.map(&String.to_integer(&1))
-      |> Enum.chunk_every(2)
-      |> Enum.reduce({[], []}, fn [i, j], {acc_i, acc_j} ->
-        {[i | acc_i], [j | acc_j]}
-      end)
+  def get_lists() do
+    Day_1.input()
+    |> String.split()
+    |> Enum.map(&String.to_integer(&1))
+    |> Enum.chunk_every(2)
+    |> Enum.reduce({[], []}, fn [i, j], {acc_i, acc_j} ->
+      {[i | acc_i], [j | acc_j]}
+    end)
+  end
+
+  def run_part1() do
+    {l1, l2} = get_lists()
 
     l1 = Enum.sort(l1)
     l2 = Enum.sort(l2)
 
     Enum.zip(l2, l1)
-    |> Enum.map(fn {i, j} ->
-      if i > j do
-        i - j
-      else
-        j - i
-      end
+    |> Enum.map(fn
+      {i, j} when i > j -> i - j
+      {i, j} -> j - i
     end)
+    |> Enum.sum()
+  end
+
+  def run_part2() do
+    {l1, l2} = get_lists()
+    fq = Enum.frequencies(l2)
+
+    Enum.map(l1, fn l -> l * Map.get(fq, l, 0) end)
     |> Enum.sum()
   end
 end
 ```
 
 ```elixir
-Day_1.run()
+Day_1.run_part1()
+```
+
+```elixir
+Day_1.run_part2()
 ```
 
 ## Day 2
@@ -64,7 +76,7 @@ defmodule Day_2 do
     File.read!("/home/andy/adventofcode/2024/day2.txt")
   end
 
-  def calculate(list) do
+  def calculate(list, opts \\ []) do
     cond do
       Enum.sort(list, :asc) == list ->
         :increase
@@ -75,34 +87,82 @@ defmodule Day_2 do
       true ->
         :unknown
     end
-    |> is_safe?(list)
+    |> is_safe?(list, opts)
   end
 
   def get_level_differ(list, head) do
-    {result, _} =
-      Enum.reduce(list, {[], head}, fn l, {i, j} ->
-        r = l - j
-        {i ++ [r], l}
-      end)
-
-    result
+    Enum.reduce(list, {[], head}, fn l, {i, j} ->
+      r = l - j
+      {i ++ [r], l}
+    end)
+    |> elem(0)
   end
 
-  def is_safe?(:increase, [head | list]) do
-    get_level_differ(list, head)
-    |> Enum.all?(fn i -> i in [1, 2, 3] end)
+  def is_safe?(_, _, opts \\ [])
+
+  def is_safe?(:increase, [head | list], opts) do
+    result =
+      get_level_differ(list, head)
+      |> Enum.all?(fn i -> i in [1, 2, 3] end)
+
+    if Keyword.get(opts, :recheck, true) do
+      result
+      |> is_is_safe?([head | list])
+    else
+      result
+    end
   end
 
-  def is_safe?(:decrease, [head | list]) do
-    get_level_differ(list, head)
-    |> Enum.all?(fn i -> i in [-1, -2, -3] end)
+  def is_safe?(:decrease, [head | list], opts) do
+    result =
+      get_level_differ(list, head)
+      |> Enum.all?(fn i -> i in [-1, -2, -3] end)
+
+    if Keyword.get(opts, :recheck, true) do
+      result
+      |> is_is_safe?([head | list])
+    else
+      result
+    end
   end
 
-  def is_safe?(_, _list) do
-    false
+  def is_safe?(_, list, opts) do
+    if Keyword.get(opts, :recheck, true) do
+      false
+      |> is_is_safe?(list)
+    else
+      false
+    end
   end
 
-  def run() do
+  def is_is_safe?(true, _) do
+    true
+  end
+
+  def is_is_safe?(false, list) do
+    list
+    |> Enum.with_index()
+    |> Enum.map(fn {_, index} ->
+      List.delete_at(list, index)
+    end)
+    |> Enum.map(fn l ->
+      calculate(l, recheck: false)
+    end)
+    |> Enum.any?()
+  end
+
+  def run_part1() do
+    Day_2.input()
+    |> String.split("\n", trim: true)
+    |> Enum.map(fn l ->
+      String.split(l)
+      |> Enum.map(&String.to_integer(&1))
+      |> Day_2.calculate(recheck: false)
+    end)
+    |> Enum.count(fn r -> r == true end)
+  end
+
+  def run_part2() do
     Day_2.input()
     |> String.split("\n", trim: true)
     |> Enum.map(fn l ->
@@ -115,6 +175,14 @@ defmodule Day_2 do
 end
 ```
 
+```elixir
+Day_2.run_part1()
+```
+
+```elixir
+Day_2.run_part2()
+```
+
 ## Day 3
 
 ```elixir
@@ -124,20 +192,45 @@ defmodule Day_3 do
     File.read!("/home/andy/adventofcode/2024/day3.txt")
   end
 
-  def run() do
+  def input2 do
+    "xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))"
+  end
+
+  def calculate(x) do
+    Regex.named_captures(~r/mul\((?<f1>\d+),(?<f2>\d+)\)/, x)
+    |> Map.values()
+    |> Enum.map(&String.to_integer(&1))
+    |> Enum.product()
+  end
+
+  def run_part1() do
     Regex.scan(~r/mul\(\d+,\d+\)/, Day_3.input())
-    |> Enum.map(fn [x] ->
-      String.replace(x, "mul(", "")
-      |> String.replace(")", "")
-      |> String.split(",")
-      |> Enum.map(&String.to_integer(&1))
-      |> Enum.product()
+    |> Enum.map(fn [x] -> calculate(x) end)
+    |> Enum.sum()
+  end
+
+  def run_part2() do
+    Regex.scan(~r/mul\(\d+,\d+\)|do\(\)|don't\(\)/, Day_3.input())
+    |> Enum.map(fn [x] -> x end)
+    |> Enum.reduce({[], "do()"}, fn i, {acc, x} ->
+      cond do
+        i == "do()" -> {acc, i}
+        i == "don't()" -> {acc, i}
+        x == "do()" -> {acc ++ [i], x}
+        true -> {acc, x}
+      end
     end)
+    |> elem(0)
+    |> Enum.map(fn x -> calculate(x) end)
     |> Enum.sum()
   end
 end
 ```
 
 ```elixir
-Day_3.run()
+Day_3.run_part1()
+```
+
+```elixir
+Day_3.run_part2()
 ```
