@@ -1,0 +1,103 @@
+# Day 9
+
+## Section
+
+```elixir
+defmodule Part1 do
+  def example() do
+    """
+    0 3 6 9 12 15
+    1 3 6 10 15 21
+    10 13 16 21 30 45
+    """
+
+    File.read!("./adventofcode_2023/day9.txt")
+    |> String.split("\n", trim: true)
+  end
+
+  def something(list) do
+    sub_list =
+      Enum.with_index(list)
+      |> Enum.reduce([], fn {l, i}, acc ->
+        Enum.at(list, i + 1)
+        |> case do
+          nil ->
+            acc
+
+          li ->
+            acc ++ [li - l]
+        end
+      end)
+
+    Enum.all?(sub_list, fn i -> i == 0 end)
+    |> if do
+      [sub_list]
+    else
+      ([list] ++ [sub_list] ++ something(sub_list))
+      |> Enum.uniq()
+    end
+  end
+
+  def get_num(list) do
+    Enum.reverse(list)
+    |> Enum.reduce(0, fn i, acc ->
+      acc + List.last(i)
+    end)
+  end
+
+  def get_num2(list) do
+    list
+    |> Enum.reverse()
+    |> Enum.reduce([], fn i, acc ->
+      a =
+        List.last(acc)
+        |> case do
+          nil -> 0
+          r -> r
+        end
+
+      y = List.first(i) - a
+
+      acc ++ [y]
+    end)
+    |> List.last()
+  end
+end
+```
+
+```elixir
+Part1.example()
+|> Enum.reduce(0, fn i, acc ->
+  y =
+    String.split(i, " ", trim: true)
+    |> Enum.map(fn i -> String.to_integer(i) end)
+    |> Part1.something()
+    |> IO.inspect()
+    |> Part1.get_num2()
+    |> IO.inspect()
+
+  acc + y
+end)
+```
+
+```elixir
+[[10, 13, 16, 21, 30, 45], [3, 3, 5, 9, 15], [0, 2, 4, 6], [2, 2, 2], [0, 0]]
+|> Enum.reverse()
+|> IO.inspect()
+|> Enum.reduce([], fn i, acc ->
+  a =
+    List.last(acc)
+    |> case do
+      nil -> 0
+      r -> r
+    end
+    |> IO.inspect()
+
+  y = List.first(i) - a
+
+  IO.inspect({a, y})
+
+  acc ++ [y]
+end)
+|> List.last()
+```

@@ -1,0 +1,81 @@
+# Day 6
+
+## Section
+
+```elixir
+input = """
+Time:      7  15   30
+Distance:  9  40  200
+"""
+
+input = """
+Time:        49     78     79     80
+Distance:   298   1185   1066   1181
+"""
+
+input = """
+Time:      71530
+Distance:  940200
+"""
+
+input = """
+Time:        49787980
+Distance:   298118510661181
+"""
+```
+
+```elixir
+input =
+  String.split(input, "\n", trim: true)
+  |> Enum.reduce({[], []}, fn i, acc ->
+    {keys, values} = acc
+    [key, value] = String.split(i, ":")
+
+    value =
+      String.split(value, ~r/\s+/, trim: true)
+      |> Enum.map(&String.to_integer(&1))
+      |> IO.inspect()
+
+    {[key | keys], [value | values]}
+  end)
+
+{keys, values} = input
+```
+
+```elixir
+# one millimeters per millisecond
+test_list =
+  List.zip(values)
+  |> Enum.map(fn {d, t} ->
+    %{distance: d, time: t}
+  end)
+```
+
+```elixir
+defmodule Day6 do
+  def get_ops(max) do
+    Enum.map(0..max, fn i ->
+      to_travel = max - i
+      distance = to_travel * i
+
+      %{time: i, distance: distance}
+    end)
+  end
+end
+```
+
+```elixir
+test_list
+```
+
+```elixir
+Enum.reduce(test_list, 1, fn %{time: t, distance: d}, acc ->
+  r =
+    Day6.get_ops(t)
+    |> Enum.filter(fn %{distance: dd} -> dd > d end)
+    |> IO.inspect()
+    |> length()
+
+  acc * r
+end)
+```

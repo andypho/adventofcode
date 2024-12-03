@@ -1,0 +1,234 @@
+# Day 7
+
+## Section
+
+```elixir
+defmodule Day7 do
+  def get_cards_rank() do
+    ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"]
+    |> Enum.reverse()
+    |> Enum.with_index()
+    |> Enum.map(fn {c, i} -> {c, i} end)
+    |> Enum.into(%{})
+  end
+
+  def get_x(s) do
+    String.split(s, "", trim: true)
+    |> Enum.reduce(%{}, fn x, acc ->
+      count =
+        Map.get(acc, x)
+        |> case do
+          nil -> 1
+          r -> r + 1
+        end
+
+      Map.put(acc, x, count)
+    end)
+  end
+
+  def get_type(value) do
+    values = get_x(value) |> Map.values()
+
+    cond do
+      5 in values ->
+        "Five of a kind"
+        6
+
+      4 in values ->
+        "Four of a kind"
+        5
+
+      3 in values and 2 in values ->
+        "Three of a kind"
+        4
+
+      3 in values ->
+        "Three of a kind"
+        3
+
+      2 in values && length(values) == 3 ->
+        "Two pair"
+        2
+
+      2 in values ->
+        "One pair"
+        1
+
+      true ->
+        "High card"
+        0
+    end
+  end
+
+  def get_rank(a, b) do
+    aa = a |> String.split("", trim: true)
+    bb = b |> String.split("", trim: true)
+    cards_rank = get_cards_rank()
+
+    Enum.zip(aa, bb)
+    |> IO.inspect()
+    |> Enum.map(fn {x, y} ->
+      cards_rank[x] < cards_rank[y]
+    end)
+    |> IO.inspect()
+    |> Enum.any?()
+  end
+end
+```
+
+```elixir
+asdf = """
+32T3K 765
+T55J5 684
+KK677 28
+KTJJT 220
+QQQJA 483
+"""
+
+# asdf
+x =
+  File.read!("./adventofcode_2023/day7.txt")
+  |> String.split("\n", trim: true)
+  |> Enum.map(fn i ->
+    [card, bid] = String.split(i, " ", trim: true)
+
+    y = %{
+      bid: String.to_integer(bid),
+      type: Day7.get_type(card)
+    }
+
+    {card, y}
+  end)
+```
+
+```elixir
+cr = Day7.get_cards_rank()
+
+x
+|> Enum.group_by(fn {_, %{type: t}} -> t end)
+|> Enum.flat_map(fn {_, y} ->
+  Enum.sort(y, fn {x1, _}, {x2, _} ->
+    xx1 = String.split(x1, "", trim: true) |> Enum.map(fn y1 -> cr[y1] end) |> List.to_tuple()
+    xx2 = String.split(x2, "", trim: true) |> Enum.map(fn y2 -> cr[y2] end) |> List.to_tuple()
+
+    xx1 < xx2
+  end)
+end)
+|> Enum.with_index(1)
+|> Enum.reduce(0, fn {{_, %{bid: bid}}, index}, acc ->
+  acc + bid * index
+end)
+```
+
+```elixir
+defmodule Part2 do
+  def get_cards_rank() do
+    ["A", "K", "Q", "T", "9", "8", "7", "6", "5", "4", "3", "2", "J"]
+    |> Enum.reverse()
+    |> Enum.with_index()
+    |> Enum.map(fn {c, i} -> {c, i} end)
+    |> Enum.into(%{})
+  end
+
+  def get_type(value) do
+    values =
+      Day7.get_x(value)
+      |> Map.values()
+      |> Enum.sort(:desc)
+
+    values =
+      String.split(value, "", trim: true)
+      |> Enum.filter(&(&1 == "J"))
+      |> length()
+      |> case do
+        0 ->
+          values
+
+        5 ->
+          values
+
+        r ->
+          x = values -- [r]
+          [first | rest] = x
+          [first + r] ++ rest
+      end
+
+    cond do
+      5 in values ->
+        "Five of a kind"
+        6
+
+      4 in values ->
+        "Four of a kind"
+        5
+
+      3 in values and 2 in values ->
+        "Three of a kind"
+        4
+
+      3 in values ->
+        "Three of a kind"
+        3
+
+      2 in values && length(values) == 3 ->
+        "Two pair"
+        2
+
+      2 in values ->
+        "One pair"
+        1
+
+      true ->
+        "High card"
+        0
+    end
+  end
+end
+```
+
+```elixir
+inin =
+  """
+  32T3K 765
+  T55J5 684
+  KK677 28
+  KTJJT 220
+  QQQJA 483
+  """
+
+inin =
+  File.read!("./adventofcode_2023/day7.txt")
+
+x =
+  inin
+  |> String.split("\n", trim: true)
+  |> Enum.map(fn i ->
+    [card, bid] = String.split(i, " ", trim: true)
+
+    y = %{
+      bid: String.to_integer(bid),
+      type: Part2.get_type(card)
+    }
+
+    {card, y}
+  end)
+```
+
+```elixir
+cr = Part2.get_cards_rank()
+
+x
+|> Enum.group_by(fn {_, %{type: t}} -> t end)
+|> Enum.flat_map(fn {_, y} ->
+  Enum.sort(y, fn {x1, _}, {x2, _} ->
+    xx1 = String.split(x1, "", trim: true) |> Enum.map(fn y1 -> cr[y1] end) |> List.to_tuple()
+    xx2 = String.split(x2, "", trim: true) |> Enum.map(fn y2 -> cr[y2] end) |> List.to_tuple()
+
+    xx1 < xx2
+  end)
+end)
+|> Enum.with_index(1)
+|> Enum.reduce(0, fn {{_, %{bid: bid}}, index}, acc ->
+  acc + bid * index
+end)
+```

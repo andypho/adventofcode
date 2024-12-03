@@ -1,0 +1,117 @@
+# Day 10
+
+## Section
+
+```elixir
+defmodule Part1 do
+  def example() do
+    """
+    .....
+    .S-7.
+    .|.|.
+    .L-J.
+    .....
+    """
+    |> String.split("\n", trim: true)
+  end
+
+  def mapping() do
+    %{
+      "|" => ["n", "s"],
+      "-" => ["e", "w"],
+      "L" => ["n", "e"],
+      "J" => ["n", "w"],
+      "7" => ["s", "w"],
+      "F" => ["s", "e"]
+    }
+  end
+
+  def get_starting_pos(list) do
+    Enum.with_index(list)
+    |> Enum.reduce_while({nil, nil}, fn {l, x}, acc ->
+      if "S" in l do
+        y = Enum.find_index(l, fn ll -> "S" == ll end)
+        {:halt, {x, y}}
+      else
+        {:cont, acc}
+      end
+    end)
+  end
+
+  def get_path(list, curr \\ [])
+
+  def get_path(list, []) do
+    pos = get_starting_pos(list)
+    get_path(list, [[{"S", pos}]])
+  end
+
+  def get_path(list, curr) do
+    IO.inspect({"x", curr})
+
+    if length(curr) == 3 do
+      throw("...")
+    end
+
+    [first | _] = curr
+
+    l =
+      Enum.flat_map(first, fn {_, pos} ->
+        next_pos(list, pos)
+      end)
+
+    get_path(list, [l | curr])
+  catch
+    _ -> nil
+  end
+
+  def next_pos(list, {x, y}) do
+    [{x + 1, 1}, {x - 1, 1}, {x, y + 1}, {x, y - 1}]
+    |> Enum.reject(fn {x, y} -> x < 0 || y < 0 end)
+    |> Enum.map(fn {x, y} ->
+      i =
+        Enum.at(list, y)
+        |> Enum.at(x)
+
+      if i == "." do
+        nil
+      else
+        {i, {x, y}}
+      end
+    end)
+    |> Enum.reject(&(&1 == nil))
+  end
+end
+```
+
+```elixir
+list =
+  Part1.example()
+  |> Enum.map(fn i ->
+    String.split(i, "", trim: true)
+  end)
+```
+
+```elixir
+Part1.get_path(list)
+```
+
+```elixir
+x = 1
+y = 1
+
+[{x + 1, 1}, {x - 1, 1}, {x, y + 1}, {x, y - 1}]
+|> Enum.reject(fn {x, y} -> x < 0 || y < 0 end)
+|> Enum.map(fn {x, y} ->
+  i =
+    Enum.at(list, y)
+    |> Enum.at(x)
+    |> IO.inspect()
+
+  if i == "." do
+    nil
+  else
+    {i, {x, y}}
+  end
+end)
+|> Enum.reject(&(&1 == nil))
+```

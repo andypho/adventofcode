@@ -1,0 +1,143 @@
+# Advent of code 2024
+
+## Day 1
+
+```elixir
+defmodule Day_1 do
+  def input do
+    """
+    3   4
+    4   3
+    2   5
+    1   3
+    3   9
+    3   3
+    """
+
+    File.read!("/home/andy/adventofcode/2024/day1.txt")
+  end
+
+  def run() do
+    {l1, l2} =
+      Day_1.input()
+      |> String.split()
+      |> Enum.map(&String.to_integer(&1))
+      |> Enum.chunk_every(2)
+      |> Enum.reduce({[], []}, fn [i, j], {acc_i, acc_j} ->
+        {[i | acc_i], [j | acc_j]}
+      end)
+
+    l1 = Enum.sort(l1)
+    l2 = Enum.sort(l2)
+
+    Enum.zip(l2, l1)
+    |> Enum.map(fn {i, j} ->
+      if i > j do
+        i - j
+      else
+        j - i
+      end
+    end)
+    |> Enum.sum()
+  end
+end
+```
+
+```elixir
+Day_1.run()
+```
+
+## Day 2
+
+```elixir
+defmodule Day_2 do
+  def input() do
+    """
+    7 6 4 2 1
+    1 2 7 8 9
+    9 7 6 2 1
+    1 3 2 4 5
+    8 6 4 4 1
+    1 3 6 7 9
+    """
+
+    File.read!("/home/andy/adventofcode/2024/day2.txt")
+  end
+
+  def calculate(list) do
+    cond do
+      Enum.sort(list, :asc) == list ->
+        :increase
+
+      Enum.sort(list, :desc) == list ->
+        :decrease
+
+      true ->
+        :unknown
+    end
+    |> is_safe?(list)
+  end
+
+  def get_level_differ(list, head) do
+    {result, _} =
+      Enum.reduce(list, {[], head}, fn l, {i, j} ->
+        r = l - j
+        {i ++ [r], l}
+      end)
+
+    result
+  end
+
+  def is_safe?(:increase, [head | list]) do
+    get_level_differ(list, head)
+    |> Enum.all?(fn i -> i in [1, 2, 3] end)
+  end
+
+  def is_safe?(:decrease, [head | list]) do
+    get_level_differ(list, head)
+    |> Enum.all?(fn i -> i in [-1, -2, -3] end)
+  end
+
+  def is_safe?(_, _list) do
+    false
+  end
+
+  def run() do
+    Day_2.input()
+    |> String.split("\n", trim: true)
+    |> Enum.map(fn l ->
+      String.split(l)
+      |> Enum.map(&String.to_integer(&1))
+      |> Day_2.calculate()
+    end)
+    |> Enum.count(fn r -> r == true end)
+  end
+end
+```
+
+## Day 3
+
+```elixir
+defmodule Day_3 do
+  def input do
+    "xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))"
+    File.read!("/home/andy/adventofcode/2024/day3.txt")
+  end
+
+  def run() do
+    Regex.scan(~r/mul\(\d+,\d+\)/, Day_3.input())
+    |> Enum.map(fn [x] ->
+      String.replace(x, "mul(", "")
+      |> String.replace(")", "")
+      |> String.split(",")
+      |> Enum.map(&String.to_integer(&1))
+      |> Enum.product()
+    end)
+    |> Enum.sum()
+  end
+end
+```
+
+```elixir
+Day_3.run()
+```
