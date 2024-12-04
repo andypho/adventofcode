@@ -230,3 +230,110 @@ Day_3.run_part1()
 ```elixir
 Day_3.run_part2()
 ```
+
+## Day 4
+
+```elixir
+defmodule Day_4 do
+  def input() do
+    """
+    MMMSXXMASM
+    MSAMXMSMSA
+    AMXSXMAAMM
+    MSAMASMSMX
+    XMASAMXAMM
+    XXAMMXXAMA
+    SMSMSASXSS
+    SAXAMASAAA
+    MAMMMXMMMM
+    MXMXAXMASX
+    """
+
+    File.read!("day4.txt")
+  end
+
+  def get_word(str) do
+    word = String.split(str, "", trim: true)
+    word_reverse = Enum.reverse(word)
+    {word, word_reverse, 0..(length(word) - 1)}
+  end
+
+  def get_grid() do
+    Day_4.input()
+    |> String.split("\n", trim: true)
+    |> Enum.map(fn i -> String.split(i, "", trim: true) end)
+  end
+
+  def gen_diagonal(grid, i, j) do
+    unless i < 0 || j < 0 do
+      (Enum.at(grid, i) || [])
+      |> Enum.at(j)
+    end
+  end
+
+  @spec add_count(Integer.t(), boolean()) :: Integer.t()
+  def add_count(count, res) do
+    if res do
+      count + 1
+    else
+      count
+    end
+  end
+
+  def run_part1() do
+    grid = Day_4.get_grid()
+
+    {word, word_reverse, from_to} = Day_4.get_word("XMAS")
+
+    Enum.with_index(grid)
+    |> Enum.reduce(0, fn {y, i}, count ->
+      Enum.with_index(y)
+      |> Enum.reduce(count, fn {_x, j}, inner_count ->
+        horizontal = Enum.map(from_to, fn g -> grid |> Enum.at(i) |> Enum.at(j + g) end)
+        vertical = Enum.map(from_to, fn g -> (grid |> Enum.at(i + g) || []) |> Enum.at(j) end)
+        diagonal_1 = Enum.map(from_to, &Day_4.gen_diagonal(grid, i + &1, j + &1))
+        diagonal_2 = Enum.map(from_to, &Day_4.gen_diagonal(grid, i + &1, j - &1))
+
+        inner_count
+        |> Day_4.add_count(horizontal == word)
+        |> Day_4.add_count(horizontal == word_reverse)
+        |> Day_4.add_count(vertical == word)
+        |> Day_4.add_count(vertical == word_reverse)
+        |> Day_4.add_count(diagonal_1 == word)
+        |> Day_4.add_count(diagonal_1 == word_reverse)
+        |> Day_4.add_count(diagonal_2 == word)
+        |> Day_4.add_count(diagonal_2 == word_reverse)
+      end)
+    end)
+  end
+
+  def run_part2() do
+    grid = Day_4.get_grid()
+
+    {word, word_reverse, from_to} = Day_4.get_word("MAS")
+
+    Enum.with_index(grid)
+    |> Enum.reduce(0, fn {y, i}, count ->
+      Enum.with_index(y)
+      |> Enum.reduce(count, fn {_x, j}, inner_count ->
+        diagonal_1 = Enum.map(from_to, &Day_4.gen_diagonal(grid, i + &1, j + &1))
+        diagonal_2 = Enum.map(from_to, &Day_4.gen_diagonal(grid, i + &1, j - &1 + 2))
+
+        inner_count
+        |> Day_4.add_count(diagonal_1 == word && diagonal_2 == word)
+        |> Day_4.add_count(diagonal_1 == word && diagonal_2 == word_reverse)
+        |> Day_4.add_count(diagonal_1 == word_reverse && diagonal_2 == word)
+        |> Day_4.add_count(diagonal_1 == word_reverse && diagonal_2 == word_reverse)
+      end)
+    end)
+  end
+end
+```
+
+```elixir
+Day_4.run_part1()
+```
+
+```elixir
+Day_4.run_part2()
+```
