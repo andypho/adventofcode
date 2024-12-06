@@ -337,3 +337,145 @@ Day_4.run_part1()
 ```elixir
 Day_4.run_part2()
 ```
+
+## Day 5
+
+```elixir
+defmodule Day_5 do
+  def input do
+    """
+    47|53
+    97|13
+    97|61
+    97|47
+    75|29
+    61|13
+    75|53
+    29|13
+    97|29
+    53|29
+    61|53
+    97|53
+    61|29
+    47|13
+    75|47
+    97|75
+    47|61
+    75|61
+    47|29
+    75|13
+    53|13
+
+    75,47,61,53,29
+    97,61,53,29,13
+    75,29,13
+    75,97,47,61,53
+    61,13,29
+    97,13,75,29,47
+    """
+  end
+
+  def process_input() do
+    File.read!("day5.txt")
+    |> String.split("\n", trim: true)
+    |> Enum.reduce({[], []}, fn i, {acc_x, acc_y} ->
+      String.contains?(i, "|")
+      |> if do
+        [start, ends] =
+          String.split(i, "|")
+          |> Enum.map(&String.to_integer(&1))
+
+        {[{start, ends} | acc_x], acc_y}
+      else
+        {acc_x, [String.split(i, ",") |> Enum.map(&String.to_integer(&1)) | acc_y]}
+      end
+    end)
+    |> case do
+      {ordering, print_order} ->
+        {Enum.reverse(ordering)
+         |> Day_5.to_map(), Enum.reverse(print_order)}
+    end
+  end
+
+  def to_map(ordering) do
+    Enum.reduce(ordering, %{}, fn {from, to}, acc ->
+      Map.get_and_update(acc, from, fn curr ->
+        if curr == nil do
+          {curr, [to]}
+        else
+          {curr, [to | curr]}
+        end
+      end)
+      |> elem(1)
+    end)
+  end
+
+  def run_part1(print_order, ordering_map) do
+    Enum.filter(print_order, fn list -> to_check?(list, ordering_map) end)
+    |> get_sum()
+  end
+
+  def run_part2(print_order, ordering_map) do
+    Enum.reject(print_order, fn list -> to_check?(list, ordering_map) end)
+    |> Enum.map(fn list -> re_order(list, ordering_map) end)
+    |> get_sum()
+  end
+
+  def to_check?([head | rest], map) do
+    values = Map.get(map, head, [])
+
+    Enum.all?(rest, fn r -> r in values end)
+    |> if do
+      if rest == [] do
+        true
+      else
+        to_check?(rest, map)
+      end
+    else
+      false
+    end
+  end
+
+  def re_order(list, map, index \\ 0, acc \\ [])
+
+  def re_order([], _, _, acc) do
+    acc
+  end
+
+  def re_order(list, map, index, acc) do
+    {key, rest} = List.pop_at(list, index)
+
+    l = Map.get(map, key) || []
+
+    Enum.all?(rest, fn r -> r in l end)
+    |> if do
+      re_order(rest, map, index, acc ++ [key])
+    else
+      if index + 1 >= length(list) do
+        re_order(list, map, 0, acc)
+      else
+        re_order(list, map, index + 1, acc)
+      end
+    end
+  end
+
+  def get_sum(result) when is_list(result) do
+    Enum.reduce(result, 0, fn list, sum ->
+      index = trunc((length(list) - 1) / 2)
+      sum + Enum.at(list, index)
+    end)
+  end
+end
+```
+
+```elixir
+{ordering, print_order} = Day_5.process_input()
+```
+
+```elixir
+Day_5.run_part1(print_order, ordering)
+```
+
+```elixir
+Day_5.run_part2(print_order, ordering)
+```
